@@ -48,3 +48,16 @@ exports.shortenUrl = async (req, res) => {
     });
   }
 };
+
+exports.redirectToOriginalUrl = async (req, res) => {
+  try {
+    const shortUrl = req.params.shortUrl;
+
+    const urlDoc = await UrlDoc.findOne({ short_url: shortUrl });
+    const originalUrl = urlDoc.original_url;
+
+    res.status(200).redirect(originalUrl);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
