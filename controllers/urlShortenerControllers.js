@@ -5,7 +5,10 @@ const UrlDoc = require("./../models/urlDocModel");
 const validateUrl = (input) => {
   try {
     const url = new URL(input);
-    return url.protocol === "http:" || url.protocol === "https:";
+    const isValidProtocol =
+      url.protocol === "http:" || url.protocol === "https:";
+    const isValidHostname = url.hostname && url.hostname.includes(".");
+    return isValidProtocol && isValidHostname;
   } catch (error) {
     return false;
   }
