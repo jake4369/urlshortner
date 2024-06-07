@@ -54,9 +54,14 @@ exports.redirectToOriginalUrl = async (req, res) => {
     const shortUrl = req.params.shortUrl;
 
     const urlDoc = await UrlDoc.findOne({ short_url: shortUrl });
+
+    if (!urlDoc) {
+      return res.status(404).json({ error: "URL not found" });
+    }
+
     const originalUrl = urlDoc.original_url;
 
-    res.status(200).redirect(originalUrl);
+    res.status(302).redirect(originalUrl);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
