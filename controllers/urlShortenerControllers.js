@@ -1,4 +1,5 @@
-const URL = require("url").URL;
+// const URL = require("url").URL;
+const urlparser = require("url");
 const dns = require("dns");
 const ShortUniqueId = require("short-unique-id");
 const UrlDoc = require("./../models/urlDocModel");
@@ -13,65 +14,74 @@ const UrlDoc = require("./../models/urlDocModel");
 //   return false;
 // }
 
-const validateUrl = async (url) => {
-  const regex = /^https?:\/\//;
+// const validateUrl = async (url) => {
+//   const regex = /^https?:\/\//;
 
-  if (!regex.test(url)) {
-    return false;
-  }
+//   if (!regex.test(url)) {
+//     return false;
+//   }
 
-  let formattedUrl = url.replace(regex, "");
-  formattedUrl = formattedUrl.replace(/\/$/, "");
+//   let formattedUrl = url.replace(regex, "");
+//   formattedUrl = formattedUrl.replace(/\/$/, "");
 
-  return new Promise((resolve, reject) => {
-    dns.lookup(formattedUrl, (err) => {
-      if (err) {
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    });
-  });
-};
+//   return new Promise((resolve, reject) => {
+//     dns.lookup(formattedUrl, (err) => {
+//       if (err) {
+//         resolve(false);
+//       } else {
+//         resolve(true);
+//       }
+//     });
+//   });
+// };
 
 exports.shortenUrl = async (req, res) => {
   const original_url = req.body.url;
 
-  const isValid = await validateUrl(original_url);
+  const dnsLookup = dns.lookup(
+    urlparser.parse(original_url).hostname,
+    async (err, address) => {
+      if (!address) {
+        res.status(400).json({
+          error: "invalid url",
+        });
+      } else {
+        try {
+          const { randomUUID } = new ShortUniqueId({ length: 10 });
+          const short_url = randomUUID();
 
-  if (!isValid) {
-    return res.status(400).json({
-      error: "invalid url",
-    });
-  }
+          const savedUrlDoc = await UrlDoc.create({
+            original_url,
+            short_url,
+          });
 
-  try {
-    const { randomUUID } = new ShortUniqueId({ length: 10 });
-    const short_url = randomUUID();
+          const result = await UrlDoc.findOne({
+            original_url: savedUrlDoc.original_url,
+          }).select("-_id -__v");
 
-    const savedUrlDoc = await UrlDoc.create({
-      original_url,
-      short_url,
-    });
+          res.status(201).json(result);
+        } catch (error) {
+          if (error.code === 11000) {
+            const urlDoc = await UrlDoc.findOne({
+              original_url: req.body.url,
+            }).select("-_id -__v");
 
-    const result = await UrlDoc.findOne({
-      original_url: savedUrlDoc.original_url,
-    }).select("-_id -__v");
+            return res.status(200).json(urlDoc);
+          }
 
-    res.status(201).json(result);
-  } catch (error) {
-    if (error.code === 11000) {
-      const urlDoc = await UrlDoc.findOne({
-        original_url: req.body.url,
-      }).select("-_id -__v");
-
-      return res.status(200).json(urlDoc);
+          res.status(500).json({
+            error: error.message,
+          });
+        }
+      }
     }
+  );
 
-    res.status(500).json({
-      error: error.message,
-    });
-  }
+  // if (!isValid) {
+  //   return res.status(400).json({
+  //     error: "invalid url",
+  //   });
+  // }
 };
 
 exports.redirectToOriginalUrl = async (req, res) => {
