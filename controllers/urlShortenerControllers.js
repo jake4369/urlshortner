@@ -2,7 +2,7 @@ const URL = require("url").URL;
 const ShortUniqueId = require("short-unique-id");
 const UrlDoc = require("./../models/urlDocModel");
 
-const validateUrl = (url) => {
+const validateUrl = (input) => {
   try {
     const url = new URL(input);
     const isValidProtocol =
