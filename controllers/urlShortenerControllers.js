@@ -9,13 +9,13 @@ const validateUrl = (input) => {
 
     if (!regex.test(input)) {
       return false;
+    } else {
+      const url = new URL(input);
+      const isValidProtocol =
+        url.protocol === "http:" || url.protocol === "https:";
+      const isValidHostname = url.hostname && url.hostname.includes(".");
+      return isValidProtocol && isValidHostname;
     }
-
-    const url = new URL(input);
-    const isValidProtocol =
-      url.protocol === "http:" || url.protocol === "https:";
-    const isValidHostname = url.hostname && url.hostname.includes(".");
-    return isValidProtocol && isValidHostname;
   } catch (error) {
     return false;
   }
@@ -25,6 +25,7 @@ exports.shortenUrl = async (req, res) => {
   const original_url = req.body.url;
 
   if (!validateUrl(original_url)) {
+    console.log(original_url);
     return res.status(400).json({
       error: "invalid url",
     });
