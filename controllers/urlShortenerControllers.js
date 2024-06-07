@@ -1,5 +1,6 @@
 const URL = require("url").URL;
 const ShortUniqueId = require("short-unique-id");
+const UrlDoc = require("./../models/urlDocModel");
 
 const validateUrl = (input) => {
   try {
@@ -10,7 +11,7 @@ const validateUrl = (input) => {
   }
 };
 
-exports.shortenUrl = (req, res) => {
+exports.shortenUrl = async (req, res) => {
   const original_url = req.body.url;
 
   if (!validateUrl(original_url)) {
@@ -23,13 +24,25 @@ exports.shortenUrl = (req, res) => {
     const { randomUUID } = new ShortUniqueId({ length: 10 });
     const short_url = randomUUID();
 
-    const urlDoc = {
+    const savedUrlDoc = await UrlDoc.create({
       original_url,
       short_url,
-    };
+    });
 
-    res.status(201).json(urlDoc);
+    const result = await UrlDoc.findOne({
+      original_url: savedUrlDoc.original_url,
+    }).select("-_id -__v");
+
+    res.status(201).json(result);
   } catch (error) {
+    if (error.code === 11000) {
+      const urlDoc = await UrlDoc.findOne({
+        original_url: req.body.url,
+      }).select("-_id -__v");
+
+      return res.status(200).json(urlDoc);
+    }
+
     res.status(500).json({
       error: error.message,
     });
