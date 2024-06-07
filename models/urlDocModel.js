@@ -4,6 +4,7 @@ const UrlDocSchema = new mongoose.Schema({
   original_url: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
   },
   short_url: {
@@ -12,6 +13,6 @@ const UrlDocSchema = new mongoose.Schema({
   },
 });
 
-const urlDoc = mongoose.model("urlDoc", UrlDocSchema);
+const UrlDoc = mongoose.model("urlDoc", UrlDocSchema);
 
-module.exports = urlDoc;
+module.exports = UrlDoc;
