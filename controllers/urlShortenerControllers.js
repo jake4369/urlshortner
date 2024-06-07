@@ -4,6 +4,13 @@ const UrlDoc = require("./../models/urlDocModel");
 
 const validateUrl = (input) => {
   try {
+    const regex =
+      /^(http:\/\/|https:\/\/)(www\.)?[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$/;
+
+    if (!regex.test(input)) {
+      return false;
+    }
+
     const url = new URL(input);
     const isValidProtocol =
       url.protocol === "http:" || url.protocol === "https:";
