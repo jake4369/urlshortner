@@ -1,23 +1,45 @@
 const URL = require("url").URL;
+const dns = require("dns");
 const ShortUniqueId = require("short-unique-id");
 const UrlDoc = require("./../models/urlDocModel");
 
-const validateUrl = (input) => {
-  try {
-    const url = new URL(input);
-    const isValidProtocol =
-      url.protocol === "http:" || url.protocol === "https:";
-    const isValidHostname = url.hostname && url.hostname.includes(".");
-    return isValidProtocol && isValidHostname;
-  } catch (error) {
+// try {
+//   const url = new URL(input);
+//   const isValidProtocol =
+//     url.protocol === "http:" || url.protocol === "https:";
+//   const isValidHostname = url.hostname && url.hostname.includes(".");
+//   return isValidProtocol && isValidHostname;
+// } catch (error) {
+//   return false;
+// }
+
+const validateUrl = async (url) => {
+  const regex = /^https?:\/\//;
+
+  if (!regex.test(url)) {
     return false;
   }
+
+  let formattedUrl = url.replace(regex, "");
+  formattedUrl = formattedUrl.replace(/\/$/, "");
+
+  return new Promise((resolve, reject) => {
+    dns.lookup(formattedUrl, (err) => {
+      if (err) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
 };
 
 exports.shortenUrl = async (req, res) => {
   const original_url = req.body.url;
 
-  if (!validateUrl(original_url)) {
+  const isValid = await validateUrl(original_url);
+
+  if (!isValid) {
     return res.status(400).json({
       error: "invalid url",
     });
