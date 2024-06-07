@@ -36,17 +36,17 @@ exports.shortenUrl = async (req, res) => {
       original_url: savedUrlDoc.original_url,
     }).select("-_id -__v");
 
-    res.status(201).json(result);
+    res.json(result);
   } catch (error) {
     if (error.code === 11000) {
       const urlDoc = await UrlDoc.findOne({
         original_url: req.body.url,
       }).select("-_id -__v");
 
-      return res.status(200).json(urlDoc);
+      return res.json(urlDoc);
     }
 
-    res.status(500).json({
+    res.json({
       error: error.message,
     });
   }
@@ -59,13 +59,13 @@ exports.redirectToOriginalUrl = async (req, res) => {
     const urlDoc = await UrlDoc.findOne({ short_url: shortUrl });
 
     if (!urlDoc) {
-      return res.status(404).json({ error: "URL not found" });
+      return res.json({ error: "URL not found" });
     }
 
     const originalUrl = urlDoc.original_url;
 
-    res.status(302).redirect(originalUrl);
+    res.redirect(originalUrl);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ error: error.message });
   }
 };
